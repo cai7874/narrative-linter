@@ -9,7 +9,7 @@ import gradio as gr
 
 from core.database import DEFAULT_DATABASE_PATH, initialize_database, list_entities, upsert_entity
 from core.extractor import ExtractionConfigurationError, ExtractionResponseError, extract_claims
-from core.verifier import verify_claims
+from core.audit import audit_claims
 
 
 def _entity_rows() -> list[list[str]]:
@@ -46,19 +46,10 @@ def audit_narrative(text: str):
     started = time.perf_counter()
     try:
         extraction = extract_claims(text)
-        issues = verify_claims(extraction.claims)
-        if not issues:
-            return "PASSED\n\nNo consistency issues detected.", "PASSED", _latency(started)
-        report = "\n\n".join(
-            f"[{issue.severity}] line {issue.line_number} {issue.issue_type}\n"
-            f"  {issue.flagged_text}\n"
-            f"  {issue.explanation}\n"
-            f"  Evidence: {issue.evidence_source}"
-            for issue in issues
-        )
-        return report, "CONFLICT DETECTED", _latency(started)
+        audit = audit_claims(extraction.claims)
+        return audit["report"], audit["verdict"], _latency(started), extraction.model_dump_json(indent=2)
     except (ExtractionConfigurationError, ExtractionResponseError, ValueError) as exc:
-        return f"[ERROR] {exc}", "AUDIT FAILED", _latency(started)
+        return f"[ERROR] {exc}", "AUDIT FAILED", _latency(started), ""
 
 
 def _latency(started: float) -> str:
@@ -101,13 +92,14 @@ def build_app() -> gr.Blocks:
                 report = gr.Textbox(lines=24, label="Compiler diagnostics", interactive=False)
                 verdict = gr.Textbox(label="Overall verdict", interactive=False)
                 latency = gr.Textbox(label="Execution latency", interactive=False)
+                claims_json = gr.Code(label="Extracted events (inspect coverage)", language="json", interactive=False)
         save_button.click(
             save_entity,
             [entity_id, name, status, location, inventory, attributes],
             [entity_table, save_status],
         )
         refresh_button.click(refresh_entities, outputs=entity_table)
-        audit_button.click(audit_narrative, narrative, [report, verdict, latency])
+        audit_button.click(audit_narrative, narrative, [report, verdict, latency, claims_json])
     return demo
 
 

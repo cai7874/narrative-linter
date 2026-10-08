@@ -1,0 +1,649 @@
+{
+  "mode": "gold_claim_replay",
+  "case_count": 17,
+  "exact_matches": 17,
+  "tp": 14,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "note": "Synthetic acceptance cases, not a representative or held-out narrative benchmark. Live mode has no LLM-only baseline.",
+  "cases": [
+    {
+      "case_id": "bare_attack",
+      "expected": [],
+      "expected_verdict": "CHECKS CLEAR",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "attacked",
+          "target": "Guard",
+          "items_used": [],
+          "claimed_location": null,
+          "text_span": "Hero attacked Guard.",
+          "line_number": 1
+        }
+      ],
+      "issues": [],
+      "verdict": "CHECKS CLEAR",
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "owned_tool",
+      "expected": [],
+      "expected_verdict": "CHECKS CLEAR",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "attacked",
+          "target": "Guard",
+          "items_used": [
+            "silver_dagger"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero attacked Guard with the silver dagger.",
+          "line_number": 1
+        }
+      ],
+      "issues": [],
+      "verdict": "CHECKS CLEAR",
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "dead_subject_walks",
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "STATUS_VIOLATION"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED",
+      "claims": [
+        {
+          "subject": "Mentor",
+          "action": "walked",
+          "target": null,
+          "items_used": [],
+          "claimed_location": "Forest",
+          "text_span": "Mentor walked to the Forest.",
+          "line_number": 1
+        }
+      ],
+      "issues": [
+        {
+          "severity": "ERROR",
+          "issue_type": "STATUS_VIOLATION",
+          "line_number": 1,
+          "flagged_text": "Mentor walked to the Forest.",
+          "explanation": "Dead entity 'Mentor' cannot perform 'walked'.",
+          "evidence_source": "Replay state: Mentor status=dead"
+        }
+      ],
+      "verdict": "CONFLICT DETECTED",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "missing_tool",
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "INVENTORY_DEFICIT"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "magic_wand"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero used a magic wand.",
+          "line_number": 1
+        }
+      ],
+      "issues": [
+        {
+          "severity": "ERROR",
+          "issue_type": "INVENTORY_DEFICIT",
+          "line_number": 1,
+          "flagged_text": "Hero used a magic wand.",
+          "explanation": "'Hero' does not own required item(s): magic_wand.",
+          "evidence_source": "Replay state: inventory=['silver_dagger', 'torch']"
+        }
+      ],
+      "verdict": "CONFLICT DETECTED",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "wrong_location",
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "SPATIAL_MISMATCH"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "torch"
+          ],
+          "claimed_location": "Forest",
+          "text_span": "Hero used the torch in the Forest.",
+          "line_number": 1
+        }
+      ],
+      "issues": [
+        {
+          "severity": "ERROR",
+          "issue_type": "SPATIAL_MISMATCH",
+          "line_number": 1,
+          "flagged_text": "Hero used the torch in the Forest.",
+          "explanation": "Claimed location differs from the subject's current location.",
+          "evidence_source": "Replay state: Hero location=Castle Courtyard; claimed=Forest"
+        }
+      ],
+      "verdict": "CONFLICT DETECTED",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "forbidden_rule",
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "RULE_BREACH"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "teleport",
+          "target": null,
+          "items_used": [],
+          "claimed_location": null,
+          "text_span": "Hero teleported.",
+          "line_number": 1
+        }
+      ],
+      "issues": [
+        {
+          "severity": "ERROR",
+          "issue_type": "RULE_BREACH",
+          "line_number": 1,
+          "flagged_text": "Hero teleported.",
+          "explanation": "Teleportation is forbidden in the current world.",
+          "evidence_source": "World rule: rule_no_teleport (magic_system)"
+        }
+      ],
+      "verdict": "CONFLICT DETECTED",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "unknown_subject",
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "ENTITY_NOT_FOUND"
+        }
+      ],
+      "expected_verdict": "PARTIAL CHECK",
+      "claims": [
+        {
+          "subject": "Aria",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "torch"
+          ],
+          "claimed_location": null,
+          "text_span": "Aria used a torch.",
+          "line_number": 1
+        }
+      ],
+      "issues": [
+        {
+          "severity": "WARNING",
+          "issue_type": "ENTITY_NOT_FOUND",
+          "line_number": 1,
+          "flagged_text": "Aria used a torch.",
+          "explanation": "Unknown subject 'Aria'.",
+          "evidence_source": "World state: subject not found"
+        }
+      ],
+      "verdict": "PARTIAL CHECK",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "unsupported_action",
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "UNSUPPORTED_ACTION"
+        }
+      ],
+      "expected_verdict": "PARTIAL CHECK",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "danced",
+          "target": null,
+          "items_used": [],
+          "claimed_location": null,
+          "text_span": "Hero danced.",
+          "line_number": 1
+        }
+      ],
+      "issues": [
+        {
+          "severity": "WARNING",
+          "issue_type": "UNSUPPORTED_ACTION",
+          "line_number": 1,
+          "flagged_text": "Hero danced.",
+          "explanation": "Action 'danced' is outside the implemented vocabulary.",
+          "evidence_source": "Verifier: ACTION_ALIASES"
+        }
+      ],
+      "verdict": "PARTIAL CHECK",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "empty_extraction",
+      "expected": [],
+      "expected_verdict": "NOT CHECKED",
+      "claims": [],
+      "issues": [],
+      "verdict": "NOT CHECKED",
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "valid_transfer_then_missing_item",
+      "expected": [
+        {
+          "line_number": 2,
+          "issue_type": "INVENTORY_DEFICIT"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "gave",
+          "target": "Guard",
+          "items_used": [
+            "silver_dagger"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero gave Guard the silver dagger.",
+          "line_number": 1
+        },
+        {
+          "subject": "Hero",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "silver_dagger"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero used the silver dagger.",
+          "line_number": 2
+        }
+      ],
+      "issues": [
+        {
+          "severity": "ERROR",
+          "issue_type": "INVENTORY_DEFICIT",
+          "line_number": 2,
+          "flagged_text": "Hero used the silver dagger.",
+          "explanation": "'Hero' does not own required item(s): silver_dagger.",
+          "evidence_source": "Replay state: inventory=['torch']"
+        }
+      ],
+      "verdict": "CONFLICT DETECTED",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "invalid_transfer_does_not_create_item",
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "INVENTORY_DEFICIT"
+        },
+        {
+          "line_number": 2,
+          "issue_type": "INVENTORY_DEFICIT"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "gave",
+          "target": "Guard",
+          "items_used": [
+            "magic_wand"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero gave Guard a magic wand.",
+          "line_number": 1
+        },
+        {
+          "subject": "Guard",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "magic_wand"
+          ],
+          "claimed_location": null,
+          "text_span": "Guard used the magic wand.",
+          "line_number": 2
+        }
+      ],
+      "issues": [
+        {
+          "severity": "ERROR",
+          "issue_type": "INVENTORY_DEFICIT",
+          "line_number": 1,
+          "flagged_text": "Hero gave Guard a magic wand.",
+          "explanation": "'Hero' does not own required item(s): magic_wand.",
+          "evidence_source": "Replay state: inventory=['silver_dagger', 'torch']"
+        },
+        {
+          "severity": "ERROR",
+          "issue_type": "INVENTORY_DEFICIT",
+          "line_number": 2,
+          "flagged_text": "Guard used the magic wand.",
+          "explanation": "'Guard' does not own required item(s): magic_wand.",
+          "evidence_source": "Replay state: inventory=['spear']"
+        }
+      ],
+      "verdict": "CONFLICT DETECTED",
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "movement_then_spatial_conflict",
+      "expected": [
+        {
+          "line_number": 2,
+          "issue_type": "SPATIAL_MISMATCH"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "walked",
+          "target": null,
+          "items_used": [],
+          "claimed_location": "Forest",
+          "text_span": "Hero walked to the Forest.",
+          "line_number": 1
+        },
+        {
+          "subject": "Hero",
+          "action": "attacked",
+          "target": "Guard",
+          "items_used": [],
+          "claimed_location": null,
+          "text_span": "Hero attacked Guard.",
+          "line_number": 2
+        }
+      ],
+      "issues": [
+        {
+          "severity": "ERROR",
+          "issue_type": "SPATIAL_MISMATCH",
+          "line_number": 2,
+          "flagged_text": "Hero attacked Guard.",
+          "explanation": "Physical interaction/transfer requires co-presence.",
+          "evidence_source": "Replay state: Hero location=Forest; Guard location=Castle Courtyard"
+        }
+      ],
+      "verdict": "CONFLICT DETECTED",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "consumption_then_missing_item",
+      "expected": [
+        {
+          "line_number": 2,
+          "issue_type": "INVENTORY_DEFICIT"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "consumed",
+          "target": null,
+          "items_used": [
+            "torch"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero consumed the torch.",
+          "line_number": 1
+        },
+        {
+          "subject": "Hero",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "torch"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero used the torch.",
+          "line_number": 2
+        }
+      ],
+      "issues": [
+        {
+          "severity": "ERROR",
+          "issue_type": "INVENTORY_DEFICIT",
+          "line_number": 2,
+          "flagged_text": "Hero used the torch.",
+          "explanation": "'Hero' does not own required item(s): torch.",
+          "evidence_source": "Replay state: inventory=['silver_dagger']"
+        }
+      ],
+      "verdict": "CONFLICT DETECTED",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "tool_use_is_not_consumption",
+      "expected": [],
+      "expected_verdict": "CHECKS CLEAR",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "torch"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero used the torch.",
+          "line_number": 1
+        },
+        {
+          "subject": "Hero",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "torch"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero used the torch again.",
+          "line_number": 2
+        }
+      ],
+      "issues": [],
+      "verdict": "CHECKS CLEAR",
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "unknown_target",
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "ENTITY_NOT_FOUND"
+        }
+      ],
+      "expected_verdict": "PARTIAL CHECK",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "attacked",
+          "target": "Aria",
+          "items_used": [],
+          "claimed_location": null,
+          "text_span": "Hero attacked Aria.",
+          "line_number": 1
+        }
+      ],
+      "issues": [
+        {
+          "severity": "WARNING",
+          "issue_type": "ENTITY_NOT_FOUND",
+          "line_number": 1,
+          "flagged_text": "Hero attacked Aria.",
+          "explanation": "Unknown target 'Aria'.",
+          "evidence_source": "World state: target not found"
+        }
+      ],
+      "verdict": "PARTIAL CHECK",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "missing_destination",
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "INCOMPLETE_CLAIM"
+        }
+      ],
+      "expected_verdict": "PARTIAL CHECK",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "walked",
+          "target": null,
+          "items_used": [],
+          "claimed_location": null,
+          "text_span": "Hero walked.",
+          "line_number": 1
+        }
+      ],
+      "issues": [
+        {
+          "severity": "WARNING",
+          "issue_type": "INCOMPLETE_CLAIM",
+          "line_number": 1,
+          "flagged_text": "Hero walked.",
+          "explanation": "Movement requires a destination.",
+          "evidence_source": "Verifier: movement requirements"
+        }
+      ],
+      "verdict": "PARTIAL CHECK",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    },
+    {
+      "case_id": "kill_then_dead_subject_moves",
+      "expected": [
+        {
+          "line_number": 2,
+          "issue_type": "STATUS_VIOLATION"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "killed",
+          "target": "Guard",
+          "items_used": [],
+          "claimed_location": null,
+          "text_span": "Hero killed Guard.",
+          "line_number": 1
+        },
+        {
+          "subject": "Guard",
+          "action": "walked",
+          "target": null,
+          "items_used": [],
+          "claimed_location": "Forest",
+          "text_span": "Guard walked to the Forest.",
+          "line_number": 2
+        }
+      ],
+      "issues": [
+        {
+          "severity": "ERROR",
+          "issue_type": "STATUS_VIOLATION",
+          "line_number": 2,
+          "flagged_text": "Guard walked to the Forest.",
+          "explanation": "Dead entity 'Guard' cannot perform 'walked'.",
+          "evidence_source": "Replay state: Guard status=dead"
+        }
+      ],
+      "verdict": "CONFLICT DETECTED",
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "exact_match": true
+    }
+  ]
+}

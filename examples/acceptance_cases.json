@@ -1,0 +1,431 @@
+{
+  "description": "Manually specified synthetic acceptance cases, added during portfolio preparation. Gold claims bypass the LLM; this is not a held-out research benchmark.",
+  "cases": [
+    {
+      "case_id": "bare_attack",
+      "text": "Hero attacked Guard.",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "attacked",
+          "target": "Guard",
+          "items_used": [],
+          "claimed_location": null,
+          "text_span": "Hero attacked Guard.",
+          "line_number": 1
+        }
+      ],
+      "expected": [],
+      "expected_verdict": "CHECKS CLEAR"
+    },
+    {
+      "case_id": "owned_tool",
+      "text": "Hero attacked Guard with the silver dagger.",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "attacked",
+          "target": "Guard",
+          "items_used": [
+            "silver_dagger"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero attacked Guard with the silver dagger.",
+          "line_number": 1
+        }
+      ],
+      "expected": [],
+      "expected_verdict": "CHECKS CLEAR"
+    },
+    {
+      "case_id": "dead_subject_walks",
+      "text": "Mentor walked to the Forest.",
+      "claims": [
+        {
+          "subject": "Mentor",
+          "action": "walked",
+          "target": null,
+          "items_used": [],
+          "claimed_location": "Forest",
+          "text_span": "Mentor walked to the Forest.",
+          "line_number": 1
+        }
+      ],
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "STATUS_VIOLATION"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED"
+    },
+    {
+      "case_id": "missing_tool",
+      "text": "Hero used a magic wand.",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "magic_wand"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero used a magic wand.",
+          "line_number": 1
+        }
+      ],
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "INVENTORY_DEFICIT"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED"
+    },
+    {
+      "case_id": "wrong_location",
+      "text": "Hero used the torch in the Forest.",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "torch"
+          ],
+          "claimed_location": "Forest",
+          "text_span": "Hero used the torch in the Forest.",
+          "line_number": 1
+        }
+      ],
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "SPATIAL_MISMATCH"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED"
+    },
+    {
+      "case_id": "forbidden_rule",
+      "text": "Hero teleported.",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "teleport",
+          "target": null,
+          "items_used": [],
+          "claimed_location": null,
+          "text_span": "Hero teleported.",
+          "line_number": 1
+        }
+      ],
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "RULE_BREACH"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED"
+    },
+    {
+      "case_id": "unknown_subject",
+      "text": "Aria used a torch.",
+      "claims": [
+        {
+          "subject": "Aria",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "torch"
+          ],
+          "claimed_location": null,
+          "text_span": "Aria used a torch.",
+          "line_number": 1
+        }
+      ],
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "ENTITY_NOT_FOUND"
+        }
+      ],
+      "expected_verdict": "PARTIAL CHECK"
+    },
+    {
+      "case_id": "unsupported_action",
+      "text": "Hero danced.",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "danced",
+          "target": null,
+          "items_used": [],
+          "claimed_location": null,
+          "text_span": "Hero danced.",
+          "line_number": 1
+        }
+      ],
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "UNSUPPORTED_ACTION"
+        }
+      ],
+      "expected_verdict": "PARTIAL CHECK"
+    },
+    {
+      "case_id": "empty_extraction",
+      "text": "The castle was quiet.",
+      "claims": [],
+      "expected": [],
+      "expected_verdict": "NOT CHECKED"
+    },
+    {
+      "case_id": "valid_transfer_then_missing_item",
+      "text": "Hero gave Guard the silver dagger.\nHero used the silver dagger.",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "gave",
+          "target": "Guard",
+          "items_used": [
+            "silver_dagger"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero gave Guard the silver dagger.",
+          "line_number": 1
+        },
+        {
+          "subject": "Hero",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "silver_dagger"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero used the silver dagger.",
+          "line_number": 2
+        }
+      ],
+      "expected": [
+        {
+          "line_number": 2,
+          "issue_type": "INVENTORY_DEFICIT"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED"
+    },
+    {
+      "case_id": "invalid_transfer_does_not_create_item",
+      "text": "Hero gave Guard a magic wand.\nGuard used the magic wand.",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "gave",
+          "target": "Guard",
+          "items_used": [
+            "magic_wand"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero gave Guard a magic wand.",
+          "line_number": 1
+        },
+        {
+          "subject": "Guard",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "magic_wand"
+          ],
+          "claimed_location": null,
+          "text_span": "Guard used the magic wand.",
+          "line_number": 2
+        }
+      ],
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "INVENTORY_DEFICIT"
+        },
+        {
+          "line_number": 2,
+          "issue_type": "INVENTORY_DEFICIT"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED"
+    },
+    {
+      "case_id": "movement_then_spatial_conflict",
+      "text": "Hero walked to the Forest.\nHero attacked Guard.",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "walked",
+          "target": null,
+          "items_used": [],
+          "claimed_location": "Forest",
+          "text_span": "Hero walked to the Forest.",
+          "line_number": 1
+        },
+        {
+          "subject": "Hero",
+          "action": "attacked",
+          "target": "Guard",
+          "items_used": [],
+          "claimed_location": null,
+          "text_span": "Hero attacked Guard.",
+          "line_number": 2
+        }
+      ],
+      "expected": [
+        {
+          "line_number": 2,
+          "issue_type": "SPATIAL_MISMATCH"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED"
+    },
+    {
+      "case_id": "consumption_then_missing_item",
+      "text": "Hero consumed the torch.\nHero used the torch.",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "consumed",
+          "target": null,
+          "items_used": [
+            "torch"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero consumed the torch.",
+          "line_number": 1
+        },
+        {
+          "subject": "Hero",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "torch"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero used the torch.",
+          "line_number": 2
+        }
+      ],
+      "expected": [
+        {
+          "line_number": 2,
+          "issue_type": "INVENTORY_DEFICIT"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED"
+    },
+    {
+      "case_id": "tool_use_is_not_consumption",
+      "text": "Hero used the torch.\nHero used the torch again.",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "torch"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero used the torch.",
+          "line_number": 1
+        },
+        {
+          "subject": "Hero",
+          "action": "used",
+          "target": null,
+          "items_used": [
+            "torch"
+          ],
+          "claimed_location": null,
+          "text_span": "Hero used the torch again.",
+          "line_number": 2
+        }
+      ],
+      "expected": [],
+      "expected_verdict": "CHECKS CLEAR"
+    },
+    {
+      "case_id": "unknown_target",
+      "text": "Hero attacked Aria.",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "attacked",
+          "target": "Aria",
+          "items_used": [],
+          "claimed_location": null,
+          "text_span": "Hero attacked Aria.",
+          "line_number": 1
+        }
+      ],
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "ENTITY_NOT_FOUND"
+        }
+      ],
+      "expected_verdict": "PARTIAL CHECK"
+    },
+    {
+      "case_id": "missing_destination",
+      "text": "Hero walked.",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "walked",
+          "target": null,
+          "items_used": [],
+          "claimed_location": null,
+          "text_span": "Hero walked.",
+          "line_number": 1
+        }
+      ],
+      "expected": [
+        {
+          "line_number": 1,
+          "issue_type": "INCOMPLETE_CLAIM"
+        }
+      ],
+      "expected_verdict": "PARTIAL CHECK"
+    },
+    {
+      "case_id": "kill_then_dead_subject_moves",
+      "text": "Hero killed Guard.\nGuard walked to the Forest.",
+      "claims": [
+        {
+          "subject": "Hero",
+          "action": "killed",
+          "target": "Guard",
+          "items_used": [],
+          "claimed_location": null,
+          "text_span": "Hero killed Guard.",
+          "line_number": 1
+        },
+        {
+          "subject": "Guard",
+          "action": "walked",
+          "target": null,
+          "items_used": [],
+          "claimed_location": "Forest",
+          "text_span": "Guard walked to the Forest.",
+          "line_number": 2
+        }
+      ],
+      "expected": [
+        {
+          "line_number": 2,
+          "issue_type": "STATUS_VIOLATION"
+        }
+      ],
+      "expected_verdict": "CONFLICT DETECTED"
+    }
+  ]
+}

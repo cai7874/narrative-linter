@@ -1,3 +1,4 @@
-gradio
-openai
-pydantic
+# Direct dependencies in the local environment used for verification.
+gradio==6.29.1
+openai==3.24.0
+pydantic==2.13.5

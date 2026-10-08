@@ -1,106 +1,71 @@
 # Narrative Linter
 
-Narrative Linter is a neuro-symbolic narrative consistency auditing engine.
-It combines LLM-based claim extraction with deterministic verification against
-an external SQLite world model.
+A coursework prototype that combines LLM-based event extraction with deterministic narrative consistency checks against a SQLite world model.
 
-## Architecture
+**Course:** Large Language Model and Societal Consequence, Uppsala University.
+**Project type:** Team project.
+**My contribution — Junmo Cai:** Proposed the project idea, designed the system architecture, and implemented the prototype.
+
+## Problem and approach
+
+A language model can overlook contradictions between a narrative and established world facts. This prototype extracts discrete events and checks a limited set of invariants against explicit character, location, inventory, and rule data.
 
 ```mermaid
 flowchart LR
-    A[Narrative text] --> B[Structured LLM extraction]
-    B --> C[Pydantic claim validation]
-    C --> D[Sequential state replay]
-    E[(SQLite world model)] --> D
-    D --> F[Deterministic invariant checks]
-    G[(World rules)] --> F
-    F --> H[DiagnosticIssue report]
-    H --> I[Gradio Blocks dashboard]
-    E --> I
+    A[Narrative text] --> B[LLM event extraction]
+    B --> C[Pydantic validation]
+    C --> D[Sequential state replay and checks]
+    E[(SQLite initial world)] --> D
+    D --> F[Diagnostics with source evidence]
+    F --> G[Gradio interface]
 ```
 
-The audit pipeline is intentionally split into probabilistic and deterministic
-stages:
+The application runs as **Python scripts**, not a Jupyter notebook. `python app.py` starts a local Gradio web service, normally at `http://127.0.0.1:7860`. The extractor connects separately to an OpenAI-compatible model endpoint, defaulting to LM Studio at `http://127.0.0.1:1234/v1`.
 
-1. The OpenAI-compatible model extracts action claims, entities, items, and
-   claimed locations from the narrative.
-2. Pydantic validates the strict JSON response.
-3. The verifier replays claims in input order against an in-memory copy of the
-   SQLite state.
-4. Deterministic checks evaluate status, inventory, spatial co-presence, world
-   rules, and unknown entities.
-5. The dashboard presents compiler-style diagnostics with line numbers and
-   database evidence.
+## Run
 
-The SQLite seed is never modified by an audit. Replay state is scoped to the
-current request.
-
-The application uses an OpenAI-compatible endpoint. By default it connects to
-LM Studio at `http://127.0.0.1:1234/v1` and requests the
-`qwen/qwen3.5-9b` model.
-
-## LM Studio setup
-
-1. Load `qwen/qwen3.5-9b` in LM Studio.
-2. Start the local server on port `1234`.
-3. Start the application:
+Tested locally with Python 3.13. Create a virtual environment from this repository directory:
 
 ```bash
-cd /Users/cai/Desktop/checker
-.venv/bin/python app.py
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-The default API key is the placeholder `lm-studio`, so no environment
-variables are required for the default LM Studio setup.
-
-## Custom provider or model
-
-Override any default with environment variables:
+An offline example needs no model server:
 
 ```bash
-export NARRATIVE_LINTER_API_KEY="provider-api-key"
-export NARRATIVE_LINTER_BASE_URL="http://127.0.0.1:1234/v1"
-export NARRATIVE_LINTER_MODEL="provider-model-id"
-.venv/bin/python app.py
+python demo.py
+python evaluate.py
+python -m unittest discover -s eval -v
 ```
 
-`OPENAI_API_KEY` and `OPENAI_BASE_URL` are also accepted as compatibility
-aliases. `NARRATIVE_LINTER_*` variables take precedence.
+For the interactive application, load your model in LM Studio and start its local server. Set the exact model ID exposed by that server:
 
-## Audit behavior
+```bash
+export NARRATIVE_LINTER_MODEL="your-local-model-id"
+python app.py
+```
 
-The verifier replays extracted claims in input order against an in-memory copy
-of the SQLite world state. It validates claimed locations, updates movement
-destinations, and tracks item acquisition, transfer, dropping, and consumption.
-Unknown subject and interaction-target entities are reported as
-`ENTITY_NOT_FOUND`. The SQLite seed remains unchanged; replay is scoped to the
-current audit.
+`NARRATIVE_LINTER_BASE_URL` and `NARRATIVE_LINTER_API_KEY` override the provider configuration. The original default model string is `qwen/qwen3.5-9b`; availability depends on the local server. SQLite is initialized on startup. Each audit replays events in memory, leaving the initial database unchanged.
 
-## Limitations
+## Example
 
-This release is an MVP and should be treated as decision support rather than
-an authoritative statement about narrative truth.
+```text
+Hero gave Guard a magic wand.
+Guard used the magic wand.
+```
 
-- The extractor depends on the selected LLM and can miss, merge, or
-  misinterpret actions, entities, items, and locations.
-- Entity resolution is currently case-insensitive name matching; aliases,
-  pronouns, duplicate names, and ambiguous references are not resolved.
-- Replay supports a finite set of normalized actions. It does not yet model
-  historical timelines, flashbacks, dreams, hypothetical statements, or
-  unreliable narrators.
-- Movement updates the in-memory location directly and does not model travel
-  time, reachability, nested locations, visibility, or distance.
-- Inventory replay tracks item names but not quantities, item identity,
-  durability, ownership history, or concurrent actions.
-- Rule matching is deterministic keyword matching, not a complete semantic
-  rule language.
-- The current spatial model requires exact location agreement and does not
-  represent regions, adjacency, line of sight, or containment.
-- Diagnostic quality depends on the quality of the database state and rules.
-  Missing world knowledge can produce false positives or false negatives.
-- The application currently runs as a local Gradio service and does not
-  provide authentication, multi-user isolation, or persistent audit history.
+The seeded world contains no magic wand. The prepared version reports an inventory deficit on both lines: an invalid transfer does not create an item in the receiver's inventory.
 
-These limitations define the next development areas: temporal event storage,
-entity resolution, structured rule evaluation, richer spatial reasoning, and
-evaluation against an annotated narrative benchmark.
+The dashboard exposes the extracted events alongside diagnostics. Empty extraction is `NOT CHECKED`, unsupported events produce warnings, and `CHECKS CLEAR` means only that no implemented invariant was violated by the extracted events.
+
+## Evidence and limits
+
+The original repository contained 14 unit tests. This prepared copy passes 28 tests and 17 manually specified synthetic acceptance cases. These cases bypass the LLM using gold event records; they do **not** measure real extraction quality or performance on a held-out narrative benchmark. No new live model evaluation was performed during preparation.
+
+The prototype supports a finite action vocabulary, name-based entity matching, exact location checks, item names without quantities, and keyword rules. It does not fully handle aliases, pronouns, negation, flashbacks, simultaneous events, travel constraints, or unreliable narrators. Source-span validation checks traceability, not semantic entailment. End-to-end comparison with an LLM-only baseline remains future work.
+
+## Coursework versus preparation
+
+The [original coursework snapshot](https://github.com/cai7874/narrative-linter/tree/4917c6b4bf88c66c252cdc049a19311203a1a7dd) is preserved in Git history. This version adds portfolio-time bug fixes, regression tests, offline examples, and clearer documentation with Codex assistance. These additions must not be presented as results completed during the original course project. See [preparation notes](docs/PREPARATION.md).

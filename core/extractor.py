@@ -34,6 +34,7 @@ class ExtractionResult(BaseModel):
 SYSTEM_PROMPT = """You extract discrete action claims from narrative text.
 Return only JSON matching the provided schema.
 Preserve the exact complete sentence or clause in text_span and use 1-based input line numbers.
+Return claims in narrative order. Each text_span must be an exact substring of its stated line.
 Use null for unknown targets or locations.
 Do not infer actions that are not stated or clearly entailed.
 Extract every explicitly used item, weapon, or tool into items_used.
@@ -94,7 +95,9 @@ def extract_claims(text: str, client: OpenAI | None = None) -> ExtractionResult:
             raise ExtractionResponseError(
                 "The extraction model returned neither content nor reasoning_content"
             )
-        return ExtractionResult.model_validate(_parse_json_content(content))
+        result = ExtractionResult.model_validate(_parse_json_content(content))
+        validate_source_spans(result, text)
+        return result
     except (json.JSONDecodeError, ValidationError, IndexError, AttributeError, TypeError) as exc:
         raise ExtractionResponseError(f"Invalid structured extraction response: {exc}") from exc
     except APIError as exc:
@@ -110,3 +113,21 @@ def _parse_json_content(content: str) -> dict:
     if not isinstance(payload, dict):
         raise TypeError("The extraction response must be a JSON object")
     return payload
+
+
+def validate_source_spans(result: ExtractionResult, text: str) -> None:
+    """Require every extracted span to occur on its stated source line.
+
+    This validates traceability, not that the action is semantically entailed.
+    Multi-line clauses are not supported by the current claim format.
+    """
+    lines = text.splitlines()
+    previous_line = 0
+    for claim in result.claims:
+        if claim.line_number > len(lines):
+            raise ExtractionResponseError("Extracted line_number is outside the input")
+        if claim.line_number < previous_line:
+            raise ExtractionResponseError("Extracted events are not in source-line order")
+        if claim.text_span not in lines[claim.line_number - 1]:
+            raise ExtractionResponseError("Extracted text_span does not occur on its stated line")
+        previous_line = claim.line_number
