@@ -1,0 +1,128 @@
+{
+  "source": "Mira is alive in North Tower. Mira owns a brass key.\nMira gave the brass key to Ivo.\nIvo does not own a sword.\nPerhaps the captain is dead. He may be in the harbor.\nMagic cannot restore the dead.\nMira is dead. Mira is alive.",
+  "elapsed_seconds": 44.131907249990036,
+  "result": {
+    "candidates": [
+      {
+        "id": "c1",
+        "fact_type": "entity",
+        "subject": "Mira",
+        "object_ref": null,
+        "field": "location",
+        "value": "North Tower",
+        "operation": "set",
+        "certainty": "explicit",
+        "text_span": "Mira is alive in North Tower.",
+        "line_number": 1
+      },
+      {
+        "id": "c2",
+        "fact_type": "entity",
+        "subject": "Mira",
+        "object_ref": null,
+        "field": "inventory",
+        "value": "brass_key",
+        "operation": "set",
+        "certainty": "explicit",
+        "text_span": "Mira owns a brass key.",
+        "line_number": 1
+      },
+      {
+        "id": "c3",
+        "fact_type": "entity",
+        "subject": "Ivo",
+        "object_ref": null,
+        "field": "inventory",
+        "value": "brass_key",
+        "operation": "add",
+        "certainty": "explicit",
+        "text_span": "Mira gave the brass key to Ivo.",
+        "line_number": 2
+      },
+      {
+        "id": "c4",
+        "fact_type": "entity",
+        "subject": "Ivo",
+        "object_ref": null,
+        "field": "inventory",
+        "value": "brass_key",
+        "operation": "set",
+        "certainty": "explicit",
+        "text_span": "Mira gave the brass key to Ivo.",
+        "line_number": 2
+      },
+      {
+        "id": "c5",
+        "fact_type": "entity",
+        "subject": "Ivo",
+        "object_ref": null,
+        "field": "inventory",
+        "value": [],
+        "operation": "set",
+        "certainty": "explicit",
+        "text_span": "Ivo does not own a sword.",
+        "line_number": 3
+      },
+      {
+        "id": "c6",
+        "fact_type": "entity",
+        "subject": "the captain",
+        "object_ref": null,
+        "field": "status",
+        "value": "dead",
+        "operation": "set",
+        "certainty": "uncertain",
+        "text_span": "Perhaps the captain is dead.",
+        "line_number": 4
+      },
+      {
+        "id": "c7",
+        "fact_type": "entity",
+        "subject": "the captain",
+        "object_ref": null,
+        "field": "location",
+        "value": "the harbor",
+        "operation": "set",
+        "certainty": "uncertain",
+        "text_span": "He may be in the harbor.",
+        "line_number": 4
+      },
+      {
+        "id": "c8",
+        "fact_type": "rule",
+        "subject": "Magic cannot restore the dead",
+        "object_ref": null,
+        "field": "description",
+        "value": "Magic cannot restore the dead",
+        "operation": "set",
+        "certainty": "explicit",
+        "text_span": "Magic cannot restore the dead.",
+        "line_number": 5
+      },
+      {
+        "id": "c9",
+        "fact_type": "entity",
+        "subject": "Mira",
+        "object_ref": null,
+        "field": "status",
+        "value": "dead",
+        "operation": "set",
+        "certainty": "explicit",
+        "text_span": "Mira is dead.",
+        "line_number": 6
+      },
+      {
+        "id": "c10",
+        "fact_type": "entity",
+        "subject": "Mira",
+        "object_ref": null,
+        "field": "status",
+        "value": "alive",
+        "operation": "set",
+        "certainty": "explicit",
+        "text_span": "Mira is alive.",
+        "line_number": 6
+      }
+    ]
+  }
+}

@@ -62,10 +62,61 @@ The dashboard exposes the extracted events alongside diagnostics. Empty extracti
 
 ## Evidence and limits
 
-The original repository contained 14 unit tests. This prepared copy passes 28 tests and 17 manually specified synthetic acceptance cases. These cases bypass the LLM using gold event records; they do **not** measure real extraction quality or performance on a held-out narrative benchmark. No new live model evaluation was performed during preparation.
+The original repository contained 14 unit tests. The pre-import preparation passed 28 tests and 17 manually specified synthetic acceptance cases. World-state extraction adds dedicated migration, extraction, merge, confirmation, and interface callback tests. These cases bypass the LLM using gold event records; they do **not** measure real extraction quality or performance on a held-out narrative benchmark. That earlier preparation did not include live model evaluation. The separate world-state extraction evaluation below now records real LM Studio results.
 
 The prototype supports a finite action vocabulary, name-based entity matching, exact location checks, item names without quantities, and keyword rules. It does not fully handle aliases, pronouns, negation, flashbacks, simultaneous events, travel constraints, or unreliable narrators. Source-span validation checks traceability, not semantic entailment. End-to-end comparison with an LLM-only baseline remains future work.
 
 ## Coursework versus preparation
 
 The [original coursework snapshot](https://github.com/cai7874/narrative-linter/tree/4917c6b4bf88c66c252cdc049a19311203a1a7dd) is preserved in Git history. This version adds portfolio-time bug fixes, regression tests, offline examples, and clearer documentation with Codex assistance. These additions must not be presented as results completed during the original course project. See [preparation notes](docs/PREPARATION.md).
+
+## World State Extraction
+
+The application now has two tabs sharing one world database. In **World State
+Extraction**, paste background notes, extract proposals, review/edit each fact and
+its source evidence, select the candidates to accept, and explicitly confirm any
+new character names. **Preview selected changes** shows additions, updates,
+conflicts, unchanged facts, and skipped proposals. **Confirm and Save** commits the
+reviewed selection and its provenance together. Editing inputs invalidates the
+preview. A concurrent world edit requires a fresh preview; repeated confirmation
+cannot duplicate an import. Cancellation and extraction failures never save facts.
+
+The separate **Story Consistency Check** tab reads those saved facts and replays
+supported events in memory. It does not persist a chapter's outcomes.
+
+Unknown status, location, and inventory remain unknown. `null` inventory differs
+from the known empty inventory `[]`. A possession statement adds a known item
+without claiming the rest of an unknown inventory is empty. Missing ownership in
+such a partial inventory produces an insufficient-information warning, rather
+than a definite inventory deficit. Inventory proposals explicitly add, remove,
+replace, or transfer items in source order. Null proposal values leave established
+fields untouched. Uncertain, negated, and unresolved proposals remain blocked
+until a person resolves or rejects them. New entities start with unknown fields.
+
+Locations and relationships have stable IDs. Attributes, relationships, and
+imported descriptive rules are stored and displayed; arbitrary prose rules do
+not automatically become verifier checks. Existing compatible keyword rules
+remain enforceable. The inspector shows import timestamps, original source text,
+source lines, and before/after records. SQLite migrations preserve existing IDs
+and facts, and deleted demo data is not reinserted on every startup.
+
+Run the complete import/review example without a model or browser:
+
+```bash
+python demo_world_import.py
+python -m unittest discover -s eval -v
+```
+
+Run the small, opt-in live extraction evaluation directly against LM Studio:
+
+```bash
+python -m eval.live_world_extraction --run
+```
+
+The six manually annotated examples assess explicit settings, transfers, omitted
+facts, negation, ambiguous references, and contradictions. Reports in
+`reports/world_live_evaluation*.json` distinguish schema/evidence failures from
+semantic extraction errors and list suggested human corrections. They do not
+measure a representative benchmark or establish semantic correctness of every
+proposal. The model can omit or misinterpret facts despite valid JSON; human
+review and confirmation remain necessary. The evaluator does not write SQLite.

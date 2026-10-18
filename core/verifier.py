@@ -13,6 +13,7 @@ class DiagnosticIssue(BaseModel):
     issue_type: Literal[
         "STATUS_VIOLATION", "INVENTORY_DEFICIT", "SPATIAL_MISMATCH",
         "RULE_BREACH", "ENTITY_NOT_FOUND", "UNSUPPORTED_ACTION", "INCOMPLETE_CLAIM",
+        "INSUFFICIENT_INFORMATION",
     ]
     line_number: int
     flagged_text: str
@@ -63,7 +64,8 @@ def verify_claims(claims: list[Claim], database_path=DEFAULT_DATABASE_PATH) -> l
     are warnings, not silent passes. The SQLite seed is never changed by replay.
     """
     state: dict[str, dict[str, Any]] = {
-        _normalized(entity["name"]): {**entity, "inventory": list(entity["inventory"])}
+        _normalized(entity["name"]): {**entity, "inventory": list(entity["inventory"]) if entity["inventory"] is not None else None,
+                                    "attributes": dict(entity["attributes"])}
         for entity in list_entities(database_path)
     }
     rules = list_rules(database_path)
@@ -86,6 +88,8 @@ def verify_claims(claims: list[Claim], database_path=DEFAULT_DATABASE_PATH) -> l
             issue("WARNING", "UNSUPPORTED_ACTION", f"Action '{claim.action}' is outside the implemented vocabulary.", "Verifier: ACTION_ALIASES")
         searchable = " ".join([raw_action, claim.target or "", *claim.items_used])
         for rule in rules:
+            if rule.get("enforcement") == "descriptive":
+                continue
             forbidden = _normalized(rule["forbidden_action"] or "")
             if forbidden and forbidden in _normalized(searchable):
                 issue("ERROR", "RULE_BREACH", rule["description"], f"World rule: {rule['rule_id']} ({rule['category']})")
@@ -99,26 +103,36 @@ def verify_claims(claims: list[Claim], database_path=DEFAULT_DATABASE_PATH) -> l
                 issue("WARNING", "INCOMPLETE_CLAIM", "This action requires an explicit target entity.", "Verifier: physical/transfer action requirements")
             elif target is None:
                 issue("WARNING", "ENTITY_NOT_FOUND", f"Unknown target '{claim.target}'.", "World state: target not found")
+        if subject["status"] is None:
+            issue("WARNING", "INSUFFICIENT_INFORMATION", f"Status of '{subject['name']}' is unknown.", "World state: unknown status")
         if subject["status"] == "dead":
             issue("ERROR", "STATUS_VIOLATION", f"Dead entity '{subject['name']}' cannot perform '{claim.action}'.", f"Replay state: {subject['name']} status=dead")
+        if target and action in {"attack", "interact", "kill"} and target["status"] is None:
+            issue("WARNING", "INSUFFICIENT_INFORMATION", f"Status of '{target['name']}' is unknown.", "World state: unknown target status")
         if target and action in {"attack", "interact", "kill"} and target["status"] == "dead":
             issue("ERROR", "STATUS_VIOLATION", f"This action targets dead entity '{target['name']}'.", f"Replay state: {target['name']} status=dead")
 
         items = _item_candidates(claim, action)
-        owned = {_normalized(item) for item in subject["inventory"]}
+        owned = {_normalized(item) for item in (subject["inventory"] or [])}
         if action in {"pick_up", "drop", "consume", "use", "give"} and not items:
             issue("WARNING", "INCOMPLETE_CLAIM", "This action requires an explicit item.", "Verifier: item action requirements")
         missing = [item for item in items if item not in owned]
-        if missing and action != "pick_up":
+        if missing and action != "pick_up" and (subject["inventory"] is None or subject["attributes"].get("_inventory_complete") is False):
+            issue("WARNING", "INSUFFICIENT_INFORMATION", f"Inventory of '{subject['name']}' is not fully known; ownership cannot be established for: {', '.join(missing)}.", "World state: unknown or partial inventory")
+        elif missing and action != "pick_up":
             issue("ERROR", "INVENTORY_DEFICIT", f"'{subject['name']}' does not own required item(s): {', '.join(missing)}.", f"Replay state: inventory={subject['inventory']}")
         if action == "move" and not (claim.claimed_location or claim.target):
             issue("WARNING", "INCOMPLETE_CLAIM", "Movement requires a destination.", "Verifier: movement requirements")
-        if claim.claimed_location and action != "move" and not _same_name(claim.claimed_location, subject["location"]):
+        if claim.claimed_location and action != "move" and subject["location"] is None:
+            issue("WARNING", "INSUFFICIENT_INFORMATION", "The subject location is unknown.", "World state: unknown location")
+        elif claim.claimed_location and action != "move" and not _same_name(claim.claimed_location, subject["location"]):
             issue("ERROR", "SPATIAL_MISMATCH", "Claimed location differs from the subject's current location.", f"Replay state: {subject['name']} location={subject['location']}; claimed={claim.claimed_location}")
         if target and action in PHYSICAL_ACTIONS:
-            if not _same_name(subject["location"], target["location"]):
+            if subject["location"] is None or target["location"] is None:
+                issue("WARNING", "INSUFFICIENT_INFORMATION", "Co-presence cannot be established because a location is unknown.", "World state: unknown location")
+            elif not _same_name(subject["location"], target["location"]):
                 issue("ERROR", "SPATIAL_MISMATCH", "Physical interaction/transfer requires co-presence.", f"Replay state: {subject['name']} location={subject['location']}; {target['name']} location={target['location']}")
-            if claim.claimed_location and not _same_name(claim.claimed_location, target["location"]):
+            if claim.claimed_location and target["location"] is not None and not _same_name(claim.claimed_location, target["location"]):
                 issue("ERROR", "SPATIAL_MISMATCH", "Claimed interaction location differs from the target location.", f"Replay state: {target['name']} location={target['location']}; claimed={claim.claimed_location}")
 
         issues.extend(event_issues)
@@ -131,11 +145,17 @@ def _apply_transition(subject, target, action, claim, items):
     if action == "move":
         subject["location"] = claim.claimed_location or claim.target
     elif action == "pick_up":
+        if subject["inventory"] is None:
+            subject["inventory"] = []
+            subject["attributes"]["_inventory_complete"] = False
         owned = {_normalized(value) for value in subject["inventory"]}
         subject["inventory"].extend(item for item in items if item not in owned)
     elif action in {"drop", "consume", "give"}:
         subject["inventory"] = [value for value in subject["inventory"] if _normalized(value) not in items]
         if action == "give":
+            if target["inventory"] is None:
+                target["inventory"] = []
+                target["attributes"]["_inventory_complete"] = False
             owned = {_normalized(value) for value in target["inventory"]}
             target["inventory"].extend(item for item in items if item not in owned)
     elif action == "kill":

@@ -1,0 +1,284 @@
+{
+  "timestamp": "2026-10-18T11:04:44.705512+00:00",
+  "model": "qwen/qwen3.5-9b",
+  "endpoint": "http://127.0.0.1:1234/v1",
+  "database_written": false,
+  "scope": "Six small annotated cases; semantic checks are separate from deterministic importer/verifier tests.",
+  "cases": [
+    {
+      "id": "explicit_settings",
+      "source": "Mira is alive in North Tower. Mira owns a brass key.",
+      "annotation": "Mira has status alive, location North Tower, and brass_key possession. Inventory is partial.",
+      "result": {
+        "candidates": [
+          {
+            "id": "c1",
+            "fact_type": "status",
+            "subject": "Mira",
+            "object_ref": null,
+            "field": "status",
+            "value": "alive",
+            "operation": "set",
+            "certainty": "explicit",
+            "text_span": "Mira is alive in North Tower.",
+            "line_number": 1
+          },
+          {
+            "id": "c2",
+            "fact_type": "location",
+            "subject": "Mira",
+            "object_ref": null,
+            "field": "location",
+            "value": "North Tower",
+            "operation": "set",
+            "certainty": "explicit",
+            "text_span": "Mira is alive in North Tower.",
+            "line_number": 1
+          },
+          {
+            "id": "c3",
+            "fact_type": "inventory",
+            "subject": "Mira",
+            "object_ref": null,
+            "field": "inventory",
+            "value": [
+              "brass_key"
+            ],
+            "operation": "add",
+            "certainty": "explicit",
+            "text_span": "Mira owns a brass key.",
+            "line_number": 1
+          }
+        ]
+      },
+      "checks": {
+        "entity_rows_are_identity_only": true,
+        "alive_status": true,
+        "tower_location": true,
+        "partial_key_possession": true
+      },
+      "extraction_errors": [],
+      "passed": true,
+      "review_corrections": [],
+      "elapsed_seconds": 20.822
+    },
+    {
+      "id": "transfer",
+      "source": "Mira owns a brass key.\nMira gave the brass key to Ivo.",
+      "annotation": "One explicit inventory add for Mira, followed by one directed transition transfer from Mira to Ivo.",
+      "result": {
+        "candidates": [
+          {
+            "id": "c1",
+            "fact_type": "inventory",
+            "subject": "Mira",
+            "object_ref": null,
+            "field": "inventory",
+            "value": [
+              "brass_key"
+            ],
+            "operation": "add",
+            "certainty": "explicit",
+            "text_span": "Mira owns a brass key.",
+            "line_number": 1
+          },
+          {
+            "id": "c2",
+            "fact_type": "inventory",
+            "subject": "Mira",
+            "object_ref": "Ivo",
+            "field": "inventory",
+            "value": [
+              "brass_key"
+            ],
+            "operation": "transfer",
+            "certainty": "transition",
+            "text_span": "Mira gave the brass key to Ivo.",
+            "line_number": 2
+          },
+          {
+            "id": "c3",
+            "fact_type": "inventory",
+            "subject": "Ivo",
+            "object_ref": null,
+            "field": "inventory",
+            "value": [
+              "brass_key"
+            ],
+            "operation": "add",
+            "certainty": "transition",
+            "text_span": "Mira gave the brass key to Ivo.",
+            "line_number": 2
+          }
+        ]
+      },
+      "checks": {
+        "entity_rows_are_identity_only": true,
+        "initial_key_possession": true,
+        "directed_transfer": true,
+        "no_duplicate_transfer_ownership": false
+      },
+      "extraction_errors": [
+        "no_duplicate_transfer_ownership"
+      ],
+      "passed": false,
+      "review_corrections": [
+        "Replace any simultaneous ownership assertions with a directed inventory transfer from Mira to Ivo."
+      ],
+      "elapsed_seconds": 21.358
+    },
+    {
+      "id": "omissions",
+      "source": "A character named Sera exists.",
+      "annotation": "Only Sera's identity is known; do not create alive status, location, or an empty inventory.",
+      "result": {
+        "candidates": [
+          {
+            "id": "c1",
+            "fact_type": "entity",
+            "subject": "Sera",
+            "object_ref": null,
+            "field": "name",
+            "value": "Sera",
+            "operation": "set",
+            "certainty": "explicit",
+            "text_span": "A character named Sera exists.",
+            "line_number": 1
+          }
+        ]
+      },
+      "checks": {
+        "entity_rows_are_identity_only": true,
+        "stated_identity": true,
+        "no_invented_fields": true
+      },
+      "extraction_errors": [],
+      "passed": true,
+      "review_corrections": [],
+      "elapsed_seconds": 13.575
+    },
+    {
+      "id": "negation",
+      "source": "Ivo does not own a sword.",
+      "annotation": "A negated sword ownership claim requiring review, never positive ownership or a complete empty inventory.",
+      "result": {
+        "candidates": [
+          {
+            "id": "c1",
+            "fact_type": "inventory",
+            "subject": "Ivo",
+            "object_ref": null,
+            "field": "inventory",
+            "value": null,
+            "operation": "remove",
+            "certainty": "negated",
+            "text_span": "Ivo does not own a sword.",
+            "line_number": 1
+          }
+        ]
+      },
+      "checks": {
+        "entity_rows_are_identity_only": true,
+        "negation_retained": false,
+        "no_positive_or_empty_inventory": true
+      },
+      "extraction_errors": [
+        "negation_retained"
+      ],
+      "passed": false,
+      "review_corrections": [
+        "Mark the sword claim negated and remove positive ownership or invented empty-inventory replacements."
+      ],
+      "elapsed_seconds": 13.489
+    },
+    {
+      "id": "ambiguous_reference",
+      "source": "The captain is in Harbor. He owns a map.",
+      "annotation": "Captain and He cannot be resolved to Ada or Ben; location and map claims require unresolved review.",
+      "result": {
+        "candidates": [
+          {
+            "id": "c1",
+            "fact_type": "location",
+            "subject": "The captain",
+            "object_ref": null,
+            "field": "location",
+            "value": "Harbor",
+            "operation": "set",
+            "certainty": "unresolved",
+            "text_span": "The captain is in Harbor.",
+            "line_number": 1
+          },
+          {
+            "id": "c2",
+            "fact_type": "inventory",
+            "subject": "He",
+            "object_ref": null,
+            "field": "inventory",
+            "value": [
+              "map"
+            ],
+            "operation": "add",
+            "certainty": "unresolved",
+            "text_span": "He owns a map.",
+            "line_number": 1
+          }
+        ]
+      },
+      "checks": {
+        "entity_rows_are_identity_only": true,
+        "location_retained": true,
+        "possession_retained": true,
+        "unresolved_not_guessed": true
+      },
+      "extraction_errors": [],
+      "passed": true,
+      "review_corrections": [],
+      "elapsed_seconds": 17.486
+    },
+    {
+      "id": "contradiction",
+      "source": "Mira is dead. Mira is alive.",
+      "annotation": "Preserve both incompatible statuses as uncertain; no stated transition chooses a final status.",
+      "result": {
+        "candidates": [
+          {
+            "id": "c1",
+            "fact_type": "status",
+            "subject": "Mira",
+            "object_ref": null,
+            "field": "status",
+            "value": "dead",
+            "operation": "set",
+            "certainty": "uncertain",
+            "text_span": "Mira is dead.",
+            "line_number": 1
+          },
+          {
+            "id": "c2",
+            "fact_type": "status",
+            "subject": "Mira",
+            "object_ref": null,
+            "field": "status",
+            "value": "alive",
+            "operation": "set",
+            "certainty": "uncertain",
+            "text_span": "Mira is alive.",
+            "line_number": 1
+          }
+        ]
+      },
+      "checks": {
+        "entity_rows_are_identity_only": true,
+        "alternatives_preserved": true,
+        "alternatives_require_review": true
+      },
+      "extraction_errors": [],
+      "passed": true,
+      "review_corrections": [],
+      "elapsed_seconds": 17.201
+    }
+  ],
+  "passed_cases": 4,
+  "total_cases": 6
+}

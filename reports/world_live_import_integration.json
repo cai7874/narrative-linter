@@ -1,0 +1,30 @@
+{
+  "model": "qwen/qwen3.5-9b",
+  "source_case": "explicit_settings",
+  "selected_candidates": [
+    "c1",
+    "c2",
+    "c3"
+  ],
+  "saved_entity": {
+    "id": "fa4ab33744724d0289c9acec733b4b47",
+    "name": "Mira",
+    "status": "alive",
+    "location": "North Tower",
+    "inventory": [
+      "brass_key"
+    ],
+    "attributes": {
+      "_inventory_complete": false
+    }
+  },
+  "provenance_count": 4,
+  "audit": {
+    "verdict": "CHECKS CLEAR",
+    "claim_count": 1,
+    "issues": [],
+    "report": "No implemented invariant was violated by the extracted events.\n\nScope: checks cover extracted events and the implemented rules only; omitted events are not verified."
+  },
+  "audit_persisted_changes": false,
+  "database": "disposable temporary database; deleted after test"
+}
