@@ -24,7 +24,7 @@ The application runs as **Python scripts**, not a Jupyter notebook. `python app.
 
 ## Run
 
-Tested locally with Python 3.13. Create a virtual environment from this repository directory:
+Tested locally with Python 3.13. Run the commands below from the repository root. Create a virtual environment there:
 
 ```bash
 python -m venv .venv
@@ -40,6 +40,9 @@ python evaluate.py
 python -m unittest discover -s eval -v
 ```
 
+See [validation instructions and retained evaluation evidence](docs/VALIDATION.md)
+for offline checks, live model evaluation, and manual demonstration steps.
+
 For the interactive application, load your model in LM Studio and start its local server. Set the exact model ID exposed by that server:
 
 ```bash
@@ -48,6 +51,12 @@ python app.py
 ```
 
 `NARRATIVE_LINTER_BASE_URL` and `NARRATIVE_LINTER_API_KEY` override the provider configuration. The original default model string is `qwen/qwen3.5-9b`; availability depends on the local server. SQLite is initialized on startup. Each audit replays events in memory, leaving the initial database unchanged.
+
+Code that calls the storage, verifier, or world-import helpers directly must call
+`initialize_database(database_path)` once before accessing the database. Use
+`seed=False` for an empty world. The application, offline scripts, and test setup
+already initialize their databases explicitly; ordinary access does not repeat
+schema migrations or demo initialization.
 
 ## Example
 
@@ -115,7 +124,7 @@ python -m eval.live_world_extraction --run
 
 The six manually annotated examples assess explicit settings, transfers, omitted
 facts, negation, ambiguous references, and contradictions. Reports in
-`reports/world_live_evaluation*.json` distinguish schema/evidence failures from
+`reports/world_live_evaluation.json` distinguish schema/evidence failures from
 semantic extraction errors and list suggested human corrections. They do not
 measure a representative benchmark or establish semantic correctness of every
 proposal. The model can omit or misinterpret facts despite valid JSON; human

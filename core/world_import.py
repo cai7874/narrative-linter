@@ -9,7 +9,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from .database import DEFAULT_DATABASE_PATH, database, initialize_database
+from .database import DEFAULT_DATABASE_PATH, database
 from .world_extractor import WorldExtractionResult, validate_world_source_spans
 
 
@@ -58,9 +58,8 @@ def prepare_import(source_text: str, extraction: WorldExtractionResult,
                    selected_ids: list[str] | None = None,
                    confirmed_names: list[str] | None = None,
                    database_path=DEFAULT_DATABASE_PATH) -> ImportPreview:
-    """Resolve only selected proposals; this operation never writes world facts."""
+    """Resolve selected proposals against an initialized database without writing facts."""
     validate_world_source_spans(extraction, source_text)
-    initialize_database(database_path, seed=False)
     with database(database_path) as connection:
         baseline = _snapshot(connection)
     working = copy.deepcopy(baseline)

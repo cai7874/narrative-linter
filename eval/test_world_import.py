@@ -77,6 +77,18 @@ class WorldImportTests(unittest.TestCase):
         self.assertIsNone(get_entity('Aria', self.path)['inventory'])
         self.assertEqual(len(list_accepted_changes(self.path)), 1)
 
+    def test_preview_reads_committed_world_while_another_connection_is_writing(self):
+        self.entity()
+        with database(self.path) as writer:
+            writer.execute('BEGIN IMMEDIATE')
+            writer.execute("UPDATE entities SET status='missing' WHERE id='aria'")
+            preview = self.preview(self.fact(value='injured'))
+            self.assertEqual(preview.errors, [])
+            self.assertEqual(preview.changes[0].before[0]['status'], 'alive')
+            self.assertEqual(preview.changes[0].after[0]['status'], 'injured')
+            self.assertEqual(get_entity('Aria', self.path)['status'], 'alive')
+            self.assertEqual(list_imports(self.path), [])
+
     def test_new_names_require_explicit_confirmation_and_missing_fields_stay_unknown(self):
         blocked = self.preview(self.fact())
         self.assertTrue(blocked.errors)

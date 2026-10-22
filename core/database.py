@@ -1,4 +1,7 @@
-"""Versioned SQLite world storage with explicit unknown values."""
+"""Versioned SQLite world storage with explicit unknown values.
+
+Call initialize_database() at application startup or in test setup before access.
+"""
 
 from __future__ import annotations
 
@@ -169,14 +172,12 @@ def _entity(row: sqlite3.Row) -> dict[str, Any]:
 
 def list_entities(database_path: str | Path = DEFAULT_DATABASE_PATH) -> list[dict[str, Any]]:
     """Return entities, preserving unknown inventory as None and empty as []."""
-    initialize_database(database_path, seed=False)
     with database(database_path) as connection:
         return [_entity(row) for row in connection.execute("SELECT * FROM entities ORDER BY name")]
 
 
 def get_entity(name: str, database_path: str | Path = DEFAULT_DATABASE_PATH) -> dict[str, Any] | None:
     """Find an entity by its case-insensitive display name."""
-    initialize_database(database_path, seed=False)
     with database(database_path) as connection:
         row = connection.execute("SELECT * FROM entities WHERE lower(name) = lower(?)", (name,)).fetchone()
         return _entity(row) if row else None
@@ -184,31 +185,26 @@ def get_entity(name: str, database_path: str | Path = DEFAULT_DATABASE_PATH) -> 
 
 def list_rules(database_path: str | Path = DEFAULT_DATABASE_PATH) -> list[dict[str, Any]]:
     """Return rules and their explicit verifier enforcement mode."""
-    initialize_database(database_path, seed=False)
     with database(database_path) as connection:
         return [dict(row) for row in connection.execute("SELECT * FROM world_rules ORDER BY rule_id")]
 
 
 def list_locations(database_path: str | Path = DEFAULT_DATABASE_PATH) -> list[dict[str, Any]]:
-    initialize_database(database_path, seed=False)
     with database(database_path) as connection:
         return [{**dict(row), "attributes": json.loads(row["attributes"] or "{}")} for row in connection.execute("SELECT * FROM locations ORDER BY name")]
 
 
 def list_relationships(database_path: str | Path = DEFAULT_DATABASE_PATH) -> list[dict[str, Any]]:
-    initialize_database(database_path, seed=False)
     with database(database_path) as connection:
         return [dict(row) for row in connection.execute("SELECT * FROM relationships ORDER BY id")]
 
 
 def list_imports(database_path: str | Path = DEFAULT_DATABASE_PATH) -> list[dict[str, Any]]:
-    initialize_database(database_path, seed=False)
     with database(database_path) as connection:
         return [dict(row) for row in connection.execute("SELECT * FROM world_imports ORDER BY created_at, id")]
 
 
 def list_accepted_changes(database_path: str | Path = DEFAULT_DATABASE_PATH) -> list[dict[str, Any]]:
-    initialize_database(database_path, seed=False)
     with database(database_path) as connection:
         return [{**dict(row), "before_value": json.loads(row["before_value"]) if row["before_value"] is not None else None,
                  "after_value": json.loads(row["after_value"]) if row["after_value"] is not None else None}
@@ -229,7 +225,6 @@ def upsert_entity(
         raise ValueError("Inventory must be a list of nonempty item names or unknown")
     if not isinstance(attributes, dict):
         raise ValueError("Attributes must be an object")
-    initialize_database(database_path, seed=False)
     with database(database_path) as connection:
         connection.execute(
             """INSERT INTO entities (id,name,status,location,inventory,attributes) VALUES (?,?,?,?,?,?)

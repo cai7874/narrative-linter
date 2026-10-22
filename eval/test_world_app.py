@@ -35,7 +35,10 @@ class WorldAppTests(unittest.TestCase):
         self.inputs = [SOURCE, proposals().model_dump_json(indent=2), "c1", "Ada"]
 
     def test_app_builds_both_modes_and_shared_inspector(self):
-        demo = app.build_app()
+        startup_path = Path(self.directory.name) / "startup.db"
+        with patch.object(app, "DEFAULT_DATABASE_PATH", startup_path):
+            demo = app.build_app()
+        self.assertEqual(len(list_entities(startup_path)), 3)
         labels = [getattr(component, "label", None) for component in demo.blocks.values()]
         self.assertIn("World State Extraction", labels)
         self.assertIn("Story Consistency Check", labels)
